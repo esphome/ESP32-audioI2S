@@ -68,10 +68,7 @@ using namespace fs;
 
 using namespace std;
 
-
-extern __attribute__((weak)) void audio_info(const char*);
-#ifndef AUDIO_NO_SD_FS
-#endif                                                                                             // AUDIO_NO_SD_FS
+extern __attribute__((weak)) void audio_info(const char *);
 extern __attribute__((weak)) void audio_eof_mp3(const char*); //end of mp3 file
 extern __attribute__((weak)) void audio_showstreamtitle(const char*);
 extern __attribute__((weak)) void audio_bitrate(const char*);
