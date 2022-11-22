@@ -5152,6 +5152,7 @@ void Audio::lostStreamDetection(uint32_t bytesAvail){
     else loopCnt = 0;
 }
 //----------------------------------------------------------------------------------------------------------------------
+#ifndef AUDIO_NO_SD_FS
 uint32_t Audio::seek_m4a_stsz(uint32_t* numEntries){
     // stsz says what size each sample is in bytes. This is important for the decoder to be able to start at a chunk,
     // and then go through each sample by its size. The stsz atom can be behind the audio block. Therefore, searching
@@ -5222,3 +5223,4 @@ noSuccess:
     audiofile.seek(0);
     return 0;
 }
+#endif // AUDIO_NO_SD_FS
