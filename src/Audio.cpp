@@ -2297,7 +2297,7 @@ void Audio::playI2Sremains() { // returns true if all dma_buffs flushed
 //---------------------------------------------------------------------------------------------------------------------
 bool Audio::pauseResume() {
     bool retVal = false;
-    if(getDatamode() == AUDIO_LOCALFILE || m_streamType == ST_WEBSTREAM) {
+    if(getDatamode() == AUDIO_LOCALFILE || m_streamType == ST_WEBSTREAM || m_streamType == ST_WEBFILE) {
         m_f_running = !m_f_running;
         retVal = true;
         if(!m_f_running) {
