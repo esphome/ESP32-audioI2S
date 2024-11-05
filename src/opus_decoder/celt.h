@@ -36,6 +36,9 @@
 #pragma GCC optimize ("Os")
 
 #include "Arduino.h"
+#include <stdint.h>
+//#include <cstddef>
+#include <assert.h>
 
 #define OPUS_RESET_STATE             4028
 #define OPUS_GET_SAMPLE_RATE_REQUEST 4029
@@ -182,9 +185,12 @@ struct CELTMode {
 };
 
 extern const CELTMode m_CELTMode;
-
-#define min(a,b) ((a)<(b)?(a):(b))
-#define max(a,b) ((a)>(b)?(a):(b))
+#ifndef _min
+    #define _min(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef _max
+    #define _max(a,b) ((a)>(b)?(a):(b))
+#endif
 
 inline int32_t S_MUL(int32_t a, int16_t b){return (int64_t)b * a >> 15;}
 #define C_MUL(m,a,b)  do{ (m).r = SUB32_ovflw(S_MUL((a).r,(b).r) , S_MUL((a).i,(b).i)); \
@@ -206,7 +212,8 @@ inline int32_t S_MUL(int32_t a, int16_t b){return (int64_t)b * a >> 15;}
 
 
 #define EC_MINI(_a,_b)      ((_a)+(((_b)-(_a))&-((_b)<(_a))))
-#define EC_CLZ0    ((int32_t)sizeof(uint32_t)*CHAR_BIT)
+#define _CHAR_BIT 8
+#define EC_CLZ0    ((int32_t)sizeof(uint32_t)*_CHAR_BIT)
 #define EC_CLZ(_x) (__builtin_clz(_x))
 #define EC_ILOG(_x) (EC_CLZ0-EC_CLZ(_x))
 
@@ -342,8 +349,8 @@ inline int32_t celt_sudiv(int32_t n, int32_t d) {
 
 inline int16_t sig2word16(int32_t x){
    x = PSHR(x, 12);
-   x = max(x, -32768);
-   x = min(x, 32767);
+   x = _max(x, -32768);
+   x = _min(x, 32767);
    return (int16_t)(x);
 }
 
@@ -378,10 +385,10 @@ inline int32_t celt_maxabs16(const int16_t *x, int32_t len) {
     int16_t maxval = 0;
     int16_t minval = 0;
     for(i = 0; i < len; i++) {
-        maxval = max(maxval, x[i]);
-        minval = min(minval, x[i]);
+        maxval = _max(maxval, x[i]);
+        minval = _min(minval, x[i]);
     }
-    return max(EXTEND32(maxval), -EXTEND32(minval));
+    return _max(EXTEND32(maxval), -EXTEND32(minval));
 }
 
 inline int32_t celt_maxabs32(const int32_t *x, int32_t len) {
@@ -389,10 +396,10 @@ inline int32_t celt_maxabs32(const int32_t *x, int32_t len) {
     int32_t maxval = 0;
     int32_t minval = 0;
     for(i = 0; i < len; i++) {
-        maxval = max(maxval, x[i]);
-        minval = min(minval, x[i]);
+        maxval = _max(maxval, x[i]);
+        minval = _min(minval, x[i]);
     }
-    return max(maxval, -minval);
+    return _max(maxval, -minval);
 }
 
 /** Integer log in base2. Undefined for zero and negative numbers */
@@ -450,7 +457,7 @@ inline void dual_inner_prod(const int16_t *x, const int16_t *y01, const int16_t 
 }
 
 inline uint32_t celt_inner_prod(const int16_t *x, const int16_t *y, int32_t N) {
-    int i;
+    int32_t i;
     uint32_t xy = 0;
     for (i = 0; i < N; i++) xy = (int32_t)x[i] * (int32_t)y[i] + xy;
     return xy;
@@ -532,7 +539,7 @@ void     deemphasis(int32_t *in[], int16_t *pcm, int32_t N);
 void     celt_synthesis(int16_t *X, int32_t *out_syn[], int16_t *oldBandE, int32_t C, int32_t isTransient, int32_t LM,
                         int32_t silence);
 void     tf_decode(int32_t isTransient, int32_t *tf_res, int32_t LM);
-int32_t  celt_decode_with_ec(const uint8_t *inbuf, int32_t len, int16_t *outbuf, int32_t frame_size);
+int32_t  celt_decode_with_ec(int16_t *outbuf, int32_t frame_size);
 int32_t  celt_decoder_ctl(int32_t request, ...);
 int32_t  cwrsi(int32_t _n, int32_t _k, uint32_t _i, int32_t *_y);
 int32_t  decode_pulses(int32_t *_y, int32_t _n, int32_t _k);
