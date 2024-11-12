@@ -583,7 +583,6 @@ private:
     const size_t    m_frameSizeFLAC   = 4096 * 4;
     const size_t    m_frameSizeOPUS   = 1024;
     const size_t    m_frameSizeVORBIS = 4096 * 2;
-    const size_t    m_outbuffSize     = 4096 * 2;
 
     static const uint8_t m_tsPacketSize  = 188;
     static const uint8_t m_tsHeaderSize  = 4;
@@ -609,7 +608,6 @@ private:
     uint8_t         m_vol_steps = 21;               // default
     double          m_limit_left = 0;               // limiter 0 ... 1, left channel
     double          m_limit_right = 0;              // limiter 0 ... 1, right channel
-    uint8_t         m_timeoutCounter = 0;           // timeout counter
     uint8_t         m_curve = 0;                    // volume characteristic
     uint8_t         m_bitsPerSample = 16;           // bitsPerSample
     uint8_t         m_channels = 2;
@@ -623,14 +621,10 @@ private:
     uint8_t         m_ID3Size = 0;                  // lengt of ID3frame - ID3header
     uint8_t         m_vuLeft = 0;                   // average value of samples, left channel
     uint8_t         m_vuRight = 0;                  // average value of samples, right channel
-    uint8_t         m_audioTaskCoreId = 0;
-    uint8_t         m_M4A_objectType = 0;           // set in read_M4A_Header
-    uint8_t         m_M4A_chConfig = 0;             // set in read_M4A_Header
-    uint16_t        m_M4A_sampleRate = 0;           // set in read_M4A_Header
     int16_t*        m_outBuff = NULL;               // Interleaved L/R
-    int16_t         m_validSamples = {0};           // #144
-    int16_t         m_curSample{0};
-    uint16_t        m_dataMode{0};                  // Statemaschine
+    std::atomic<int16_t>  m_validSamples = {0};     // #144
+    std::atomic<int16_t>  m_curSample{0};
+    std::atomic<uint16_t> m_datamode{0};            // Statemaschine
     int16_t         m_decodeError = 0;              // Stores the return value of the decoder
     uint16_t        m_streamTitleHash = 0;          // remember streamtitle, ignore multiple occurence in metadata
     uint16_t        m_timeout_ms = 250;
@@ -644,27 +638,21 @@ private:
     uint32_t        m_metaint = 0;                  // Number of databytes between metadata
     uint32_t        m_chunkcount = 0 ;              // Counter for chunked transfer
     uint32_t        m_t0 = 0;                       // store millis(), is needed for a small delay
+	uint32_t        m_byteCounter = 0;              // count received data
     uint32_t        m_contentlength = 0;            // Stores the length if the stream comes from fileserver
     uint32_t        m_bytesNotDecoded = 0;          // pictures or something else that comes with the stream
     uint32_t        m_PlayingStartTime = 0;         // Stores the milliseconds after the start of the audio
-    int32_t         m_resumeFilePos = -1;           // the return value from stopSong(), (-1) is idle
-    int32_t         m_fileStartPos = -1;            // may be set in connecttoFS()
+    int32_t         m_resumeFilePos = -1;           // the return value from stopSong() can be entered here, (-1) is idle
     uint16_t        m_m3u8_targetDuration = 10;     //
     uint32_t        m_stsz_numEntries = 0;          // num of entries inside stsz atom (uint32_t)
     uint32_t        m_stsz_position = 0;            // pos of stsz atom within file
-    uint32_t        m_haveNewFilePos = 0;           // user changed the file position
-    uint32_t        m_sumBytesDecoded = 0;          // used for streaming
-    uint32_t        m_webFilePos = 0;               // same as audiofile.position() for SD files
     bool            m_f_metadata = false;           // assume stream without metadata
     bool            m_f_unsync = false;             // set within ID3 tag but not used
     bool            m_f_exthdr = false;             // ID3 extended header
     bool            m_f_ssl = false;
     bool            m_f_running = false;
     bool            m_f_firstCall = false;          // InitSequence for processWebstream and processLokalFile
-    bool            m_f_firstCurTimeCall = false;   // InitSequence for computeAudioTime
-    bool            m_f_firstPlayCall = false;      // InitSequence for playAudioData
     bool            m_f_firstM3U8call = false;      // InitSequence for m3u8 parsing
-    bool            m_f_ID3v1TagFound = false;      // ID3v1 tag found
     bool            m_f_chunked = false ;           // Station provides chunked transfer
     bool            m_f_firstmetabyte = false;      // True if first metabyte (counter)
     bool            m_f_playing = false;            // valid mp3 stream recognized
@@ -680,13 +668,6 @@ private:
     bool            m_f_m4aID3dataAreRead = false;  // has the m4a-ID3data already been read?
     bool            m_f_psramFound = false;         // set in constructor, result of psramInit()
     bool            m_f_timeout = false;            //
-    bool            m_f_commFMT = false;            // false: default (PHILIPS), true: Least Significant Bit Justified (japanese format)
-    bool            m_f_audioTaskIsRunning = false;
-    bool            m_f_stream = false;             // stream ready for output?
-    bool            m_f_eof = false;                // end of file
-    bool            m_f_lockInBuffer = false;       // lock inBuffer for manipulation
-    bool            m_f_audioTaskIsDecoding = false;
-    bool            m_f_acceptRanges = false;
     uint8_t         m_f_channelEnabled = 3;         // internal DAC, both channels
     uint32_t        m_audioFileDuration = 0;
     float           m_audioCurrentTime = 0;
@@ -695,7 +676,7 @@ private:
     float           m_filterBuff[3][2][2][2];       // IIR filters memory for Audio DSP
     float           m_corr = 1.0;					// correction factor for level adjustment
     size_t          m_i2s_bytesWritten = 0;         // set in i2s_write() but not used
-    size_t          m_fileSize = 0;                 // size of the file
+    size_t          m_file_size = 0;                // size of the file
     uint16_t        m_filterFrequency[2];
     int8_t          m_gain0 = 0;                    // cut or boost filters (EQ)
     int8_t          m_gain1 = 0;
