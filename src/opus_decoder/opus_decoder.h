@@ -21,6 +21,7 @@ enum : int8_t  {OPUS_CONTINUE = 110,
                 ERR_OPUS_WIDE_BAND_UNSUPPORTED = -8,
                 ERR_OPUS_SUPER_WIDE_BAND_UNSUPPORTED = -9,
                 ERR_OPUS_OGG_SYNC_NOT_FOUND = - 10,
+                ERR_OPUS_BUFFER_TOO_SMALL = -11,
                 ERR_OPUS_CELT_BAD_ARG = -18,
                 ERR_OPUS_CELT_INTERNAL_ERROR = -19,
                 ERR_OPUS_CELT_UNIMPLEMENTED = -20,
@@ -30,19 +31,20 @@ enum : int8_t  {OPUS_CONTINUE = 110,
                 ERR_OPUS_CELT_CLEAR_REQUEST = -24,
                 ERR_OPUS_CELT_SET_CHANNELS = -25,
                 ERR_OPUS_CELT_END_BAND = -26,
-                ERR_CELT_OPUS_INTERNAL_ERROR = -27};
+                ERR_OPUS_CELT_START_BAND = -27,
+                ERR_CELT_OPUS_INTERNAL_ERROR = -28};
 
 bool             OPUSDecoder_AllocateBuffers();
 void             OPUSDecoder_FreeBuffers();
 void             OPUSDecoder_ClearBuffers();
 void             OPUSsetDefaults();
-int32_t          OPUSDecode(uint8_t* inbuf, int32_t* bytesLeft, short* outbuf);
+int32_t          OPUSDecode(uint8_t* inbuf, int32_t* bytesLeft, int16_t* outbuf);
 int32_t          opusDecodePage0(uint8_t* inbuf, int32_t* bytesLeft, uint32_t segmentLength);
-int32_t          opusDecodePage3(uint8_t* inbuf, int32_t* bytesLeft, uint32_t segmentLength, short *outbuf);
-int8_t           opus_FramePacking_Code0(uint8_t *inbuf, int32_t *bytesLeft, short *outbuf, int32_t packetLen, uint16_t samplesPerFrame);
-int8_t           opus_FramePacking_Code1(uint8_t *inbuf, int32_t *bytesLeft, short *outbuf, int32_t packetLen, uint16_t samplesPerFrame, uint8_t* frameCount);
-int8_t           opus_FramePacking_Code2(uint8_t *inbuf, int32_t *bytesLeft, short *outbuf, int32_t packetLen, uint16_t samplesPerFrame, uint8_t* frameCount);
-int8_t           opus_FramePacking_Code3(uint8_t *inbuf, int32_t *bytesLeft, short *outbuf, int32_t packetLen, uint16_t samplesPerFrame, uint8_t* frameCount);
+int32_t          opusDecodePage3(uint8_t* inbuf, int32_t* bytesLeft, uint32_t segmentLength, int16_t *outbuf);
+int8_t           opus_FramePacking_Code0(uint8_t *inbuf, int32_t *bytesLeft, int16_t *outbuf, int32_t packetLen, uint16_t samplesPerFrame);
+int8_t           opus_FramePacking_Code1(uint8_t *inbuf, int32_t *bytesLeft, int16_t *outbuf, int32_t packetLen, uint16_t samplesPerFrame, uint8_t* frameCount);
+int8_t           opus_FramePacking_Code2(uint8_t *inbuf, int32_t *bytesLeft, int16_t *outbuf, int32_t packetLen, uint16_t samplesPerFrame, uint8_t* frameCount);
+int8_t           opus_FramePacking_Code3(uint8_t *inbuf, int32_t *bytesLeft, int16_t *outbuf, int32_t packetLen, uint16_t samplesPerFrame, uint8_t* frameCount);
 uint8_t          OPUSGetChannels();
 uint32_t         OPUSGetSampRate();
 uint8_t          OPUSGetBitsPerSample();

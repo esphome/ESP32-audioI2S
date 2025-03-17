@@ -2,7 +2,7 @@
  * flac_decoder.h
  *
  * Created on: Jul 03,2020
- * Updated on: May 21,2024
+ * Updated on: Nov 23,2024
  *
  *      Author: wolle
  *
@@ -21,7 +21,8 @@
 using namespace std;
 
 #define MAX_CHANNELS 2
-#define MAX_BLOCKSIZE 8192
+#define MAX_BLOCKSIZE 16384
+#define MAX_OUTBUFFSIZE 4096 * 2
 
 enum : uint8_t {FLACDECODER_INIT, FLACDECODER_READ_IN, FLACDECODER_WRITE_OUT};
 enum : uint8_t {DECODE_FRAME, DECODE_SUBFRAMES, OUT_SAMPLES};
@@ -43,7 +44,8 @@ enum : int8_t  {FLAC_PARSE_OGG_DONE = 100,
                 ERR_FLAC_BITS_PER_SAMPLE_UNKNOWN = -11,
                 ERR_FLAC_DECODER_ASYNC = -12,
                 ERR_FLAC_UNIMPLEMENTED = -13,
-                ERR_FLAC_BITREADER_UNDERFLOW = -14};
+                ERR_FLAC_BITREADER_UNDERFLOW = -14,
+                ERR_FLAC_OUTBUFFER_TOO_SMALL = -15};
 
 typedef struct FLACMetadataBlock_t{
                               // METADATA_BLOCK_STREAMINFO
