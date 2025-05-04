@@ -230,7 +230,7 @@ private:
     void processWebFile();
     void processWebStreamTS();
     void processWebStreamHLS();
-    void playAudioData();
+    void playAudioData(bool forcePlay=false);
     bool readPlayListData();
     const char* parsePlaylist_M3U();
     const char* parsePlaylist_PLS();
