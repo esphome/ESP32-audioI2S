@@ -84,9 +84,7 @@ size_t AudioBuffer::freeSpace() {
 }
 
 size_t AudioBuffer::writeSpace() {
-    if(m_readPtr == m_writePtr) {
-        m_writeSpace = 0;
-    } else if (m_readPtr > m_writePtr) {
+    if(m_readPtr >= m_writePtr) {
         m_writeSpace = (m_readPtr - m_writePtr - 1); // readPtr must not be overtaken
     } else {
         if(getReadPos() == 0)
