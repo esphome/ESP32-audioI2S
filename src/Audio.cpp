@@ -3008,14 +3008,12 @@ void Audio::processWebStream() {
     const uint16_t  maxFrameSize = InBuff.getMaxBlockSize();    // every mp3/aac frame is not bigger
     static bool     f_stream;                                   // first audio data received
     static uint32_t chunkSize;                                  // chunkcount read from stream
-	static bool zeroSizeChunkFound;                             // signals end of data
 
     // first call, set some values to default  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     if(m_f_firstCall) { // runs only ont time per connection, prepare for start
         m_f_firstCall = false;
         f_stream = false;
         chunkSize = 0;
-		zeroSizeChunkFound = false;
         m_metacount = m_metaint;
         readMetadata(0, true); // reset all static vars
     }
@@ -3080,14 +3078,9 @@ play:
     if(f_stream){
         static uint8_t cnt = 0;
         cnt++;
-        if(cnt == 3){playAudioData(zeroSizeChunkFound); cnt = 0;}
+        if(cnt == 3){playAudioData(); cnt = 0;}
     }
     
-    if (zeroSizeChunkFound && (InBuff.bufferFilled() == 0)) {
-    	_client->stop();
-    	playI2Sremains();
-    	stopSong();
-    }
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::processWebFile() {
@@ -3453,7 +3446,8 @@ void Audio::processWebStreamHLS() {
     return;
 }
 //---------------------------------------------------------------------------------------------------------------------
-void Audio::playAudioData(bool forcePlay){
+void Audio::playAudioData() {
+
     if(!InBuff.isPlayable()) return; // guard
 
     int bytesDecoded = sendBytes(InBuff.getReadPtr(), InBuff.getMaxBlockSize());
