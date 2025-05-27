@@ -141,6 +141,7 @@ void AudioBuffer::resetBuffer() {
     m_endPtr = m_buffer + m_buffSize;
     m_f_start = true;
     // memset(m_buffer, 0, m_buffSize); //Clear Inputbuffer
+    m_complete = false;
 }
 
 uint32_t AudioBuffer::getWritePos() {
@@ -380,7 +381,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 
     uint16_t lenHost = strlen(host);
 
-    if(lenHost >= 512 - 10) {
+    if(lenHost >= 1024 - 10) {
         AUDIO_INFO("Hostaddress is too long");
         return false;
     }
@@ -2408,6 +2409,12 @@ bool Audio::playChunk() {
 void Audio::loop() {
 
     if(!m_f_running) return;
+	
+    if(InBuff.isComplete() && InBuff.isEmpty()) {
+        playI2Sremains();
+        stopSong();
+        return;
+    }
 
     if(m_playlistFormat != FORMAT_M3U8){ // normal process
         switch(getDatamode()){
@@ -3026,11 +3033,22 @@ void Audio::processWebStream() {
     }
 
     if(getDatamode() != AUDIO_DATA) return;              // guard
+
     uint32_t availableBytes = _client->available();      // available from stream
+
+    if (InBuff.isComplete()) {
+        // We are waiting for the data to play out, so stop reading and keep writing.
+        goto play;
+    }
+
     // chunked data tramsfer - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     if(m_f_chunked && availableBytes){
         uint8_t readedBytes = 0;
         if(!chunkSize) chunkSize = chunkedDataTransfer(&readedBytes);
+        if(chunkSize == 0) {
+            // The buffer now contains the last chunk of data.
+            InBuff.setComplete();
+        }
         availableBytes = min(availableBytes, chunkSize);
     }
     // we have metadata  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3053,19 +3071,30 @@ void Audio::processWebStream() {
             InBuff.bytesWritten(bytesAddedToBuffer);
         }
 
-        if(InBuff.bufferFilled() > maxFrameSize && !f_stream) {  // waiting for buffer filled
+        if(m_f_chunked && (chunkSize == 0)) {
+            // Strip off the CRLF after each chunk.
+            if (!stripCRLF()) {
+                log_e("CRLF not found");
+                stopSong();
+                return;
+            }
+        }
+
+        if(InBuff.isPlayable() && !f_stream) {  // waiting for buffer filled
             f_stream = true;  // ready to play the audio data
             AUDIO_INFO("stream ready");
         }
         if(!f_stream) return;
     }
 
+play:
     // play audio data - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     if(f_stream){
         static uint8_t cnt = 0;
         cnt++;
         if(cnt == 3){playAudioData(); cnt = 0;}
     }
+    
 }
 //---------------------------------------------------------------------------------------------------------------------
 void Audio::processWebFile() {
@@ -3431,9 +3460,9 @@ void Audio::processWebStreamHLS() {
     return;
 }
 //---------------------------------------------------------------------------------------------------------------------
-void Audio::playAudioData(){
+void Audio::playAudioData() {
 
-    if(InBuff.bufferFilled() < InBuff.getMaxBlockSize()) return; // guard
+    if(!InBuff.isPlayable()) return; // guard
 
     int bytesDecoded = sendBytes(InBuff.getReadPtr(), InBuff.getMaxBlockSize());
 
@@ -5068,6 +5097,38 @@ uint16_t Audio::readMetadata(uint16_t maxBytes, bool first) {
     return res;
 }
 //----------------------------------------------------------------------------------------------------------------------
+bool Audio::stripCRLF(int prevChar) {
+    if (prevChar && (prevChar != '\r')) {
+        return false;
+    }
+    const uint32_t timeout = 2000; // ms
+    const uint32_t startTime = millis();
+    while(true) {
+        if((millis() - startTime) >= timeout) {
+            log_e("CRLF timeout");
+            return false;
+        }
+        if(_client->available() != 0) {
+            switch (_client->read()) {
+                case '\r':
+                    if(prevChar) {
+                        return false;
+                    }
+                    prevChar = '\r';
+                    break;
+                case '\n':
+                    return (prevChar == '\r');
+                    break;
+                default:
+                    return false;
+                    break;
+            }
+        } else {
+            delay(1); // wait for next byte
+        }
+    }
+}
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 size_t Audio::chunkedDataTransfer(uint8_t* bytes){
     uint8_t byteCounter = 0;
     size_t chunksize = 0;

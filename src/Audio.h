@@ -87,7 +87,7 @@ extern __attribute__((weak)) void audio_eof_stream(const char*); // The webstrea
 extern __attribute__((weak)) void audio_process_extern(int16_t* buff, uint16_t len, bool *continueI2S); // record audiodata or send via BT
 extern __attribute__((weak)) void audio_process_i2s(uint32_t* sample, bool *continueI2S); // record audiodata or send via BT
 
-#define AUDIO_INFO(...) {char buff[512 + 64]; sprintf(buff,__VA_ARGS__); if(audio_info) audio_info(buff);}
+#define AUDIO_INFO(...) {char buff[512 + 64]; snprintf(buff,sizeof(buff),__VA_ARGS__); if(audio_info) audio_info(buff);}
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -137,7 +137,10 @@ public:
     uint32_t getReadPos();                      // read position relative to the beginning
     void     resetBuffer();                     // restore defaults
     bool     havePSRAM() { return m_f_psram; };
-
+    void     setComplete() { m_complete = true; }; // indicates that the buffer contains the last data of a source
+    bool     isComplete() { return m_complete; }; // returns true if the buffer contains the last data of a source
+    bool     isEmpty() { return bufferFilled() == 0; }; // returns true if the buffer is empty
+    bool     isPlayable() { return isComplete() || (bufferFilled() >= m_maxBlockSize); }; // returns true if the buffer is either complete or has enough data to play
 protected:
     size_t   m_buffSizePSRAM    = 300000;   // most webstreams limit the advance to 100...300Kbytes
     size_t   m_buffSizeRAM      = 1600 * 5;
@@ -155,6 +158,7 @@ protected:
     bool     m_f_start          = true;
     bool     m_f_init           = false;
     bool     m_f_psram          = false;    // PSRAM is available (and used...)
+    bool     m_complete         = false;    // true if the buffer contains the last data from a source.    
 };
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -278,6 +282,7 @@ private:
 
 //+++ W E B S T R E A M  -  H E L P   F U N C T I O N S +++
     uint16_t readMetadata(uint16_t b, bool first = false);
+    bool     stripCRLF(int prevChar = 0);
     size_t   chunkedDataTransfer(uint8_t* bytes);
     bool     readID3V1Tag();
     void     slowStreamDetection(uint32_t inBuffFilled, uint32_t maxFrameSize);
@@ -494,7 +499,7 @@ private:
 
     char*           m_chbuf = NULL;
     uint16_t        m_chbufSize = 0;                // will set in constructor (depending on PSRAM)
-    char            m_lastHost[512];                // Store the last URL to a webstream
+    char            m_lastHost[1024];                // Store the last URL to a webstream
     char*           m_playlistBuff = NULL;          // stores playlistdata
     const uint16_t  m_plsBuffEntryLen = 256;        // length of each entry in playlistBuff
     filter_t        m_filter[3];                    // digital filters
