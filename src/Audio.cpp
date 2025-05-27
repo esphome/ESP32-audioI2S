@@ -381,7 +381,7 @@ bool Audio::connecttohost(const char* host, const char* user, const char* pwd) {
 
     uint16_t lenHost = strlen(host);
 
-    if(lenHost >= 512 - 10) {
+    if(lenHost >= 1024 - 10) {
         AUDIO_INFO("Hostaddress is too long");
         return false;
     }
