@@ -4488,7 +4488,7 @@ int DecodeNoiselessData(uint8_t **buf, int *bitOffset, int *bitsAvail, int ch)
  *                if there are no codes at nBits, then we just keep << 1 each time
  *                  (since count[nBits] = 0)
  **********************************************************************************************************************/
-int DecodeHuffmanScalar(const signed short *huffTab, const HuffInfo_t *huffTabInfo, uint32_t bitBuf, int32_t *val)
+int DecodeHuffmanScalar(const signed short *huffTab, const HuffInfo_t *huffTabInfo, unsigned int bitBuf, int *val)
 {
     uint32_t count, start, shift, t;
     const uint8_t *countPtr;
@@ -4509,7 +4509,7 @@ int DecodeHuffmanScalar(const signed short *huffTab, const HuffInfo_t *huffTabIn
         t = (bitBuf >> shift) - start;
     } while (t >= count);
 
-    *val = (int32_t)map[t];
+    *val = (int)map[t];
     return (countPtr - huffTabInfo->count);
 }
 
@@ -5310,7 +5310,7 @@ void GenerateNoiseVector(int *coef, int *last, int nVals)
     int i;
 
     for (i = 0; i < nVals; i++)
-        coef[i] = ((int32_t)Get32BitVal((uint32_t *)last)) >> 16;
+        coef[i] = ((int)Get32BitVal((unsigned int *)last)) >> 16;
 }
 
 /***********************************************************************************************************************

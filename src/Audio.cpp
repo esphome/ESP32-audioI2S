@@ -13,6 +13,9 @@
 #include "aac_decoder/aac_decoder.h"
 #include "flac_decoder/flac_decoder.h"
 
+#include <soc/soc.h>
+#include <soc/io_mux_reg.h>
+
 #ifndef AUDIO_NO_SD_FS
 #ifdef SDFATFS_USED
 fs::SDFATFS SD_SDFAT;
@@ -3062,7 +3065,7 @@ void Audio::processWebStream() {
 
     // buffer fill routine - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     if(availableBytes) {
-        availableBytes = min(availableBytes, InBuff.writeSpace());
+        availableBytes = min(availableBytes, (uint32_t) InBuff.writeSpace());
         int16_t bytesAddedToBuffer = _client->read(InBuff.getWritePtr(), availableBytes);
 
         if(bytesAddedToBuffer > 0) {
@@ -3133,7 +3136,7 @@ void Audio::processWebFile() {
         slowStreamDetection(InBuff.bufferFilled(), maxFrameSize);
     }
 
-    availableBytes = min(InBuff.writeSpace(), availableBytes);
+    availableBytes = min((uint32_t) InBuff.writeSpace(), availableBytes);
     availableBytes = min(m_contentlength - byteCounter, availableBytes);
     if(m_audioDataSize) availableBytes = min(m_audioDataSize - (byteCounter - m_audioDataStart), availableBytes);
 
